@@ -2,6 +2,7 @@
   "name": "notes-app",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.2.0",
   "scripts": {
     "dev": "next dev --turbo",
     "dev:webpack": "next dev",
