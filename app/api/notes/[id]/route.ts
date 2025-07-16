@@ -1,39 +1,75 @@
-import { NextRequest, NextResponse } from "next/server"
-// import { PrismaClient } from "@prisma/client"
-import { auth } from "@/lib/auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
-// const prisma = new PrismaClient()
+// Type for note with included relations
+type NoteWithRelations = {
+  id: string;
+  title: string;
+  content: string;
+  categoryId: string | null;
+  isPinned: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  category: { id: string; name: string; userId: string; createdAt: Date } | null;
+  noteTags: Array<{
+    id: string;
+    noteId: string;
+    tagId: string;
+    createdAt: Date;
+    tag: { id: string; name: string; userId: string; createdAt: Date };
+  }>;
+};
 
-// Import the same notes array (in a real app, use proper state management)
-// For demo purposes, we'll access the notes from the parent route
-let notes: any[] = []
-
-// Helper function to get notes (simulate database)
-function getNotesFromMemory() {
-  return notes.length > 0 ? notes : [
-    {
-      id: "1",
-      title: "Welcome to Notes App",
-      content: "This is your first note! You can create, edit, and delete notes here.",
-      category: "General",
-      tags: ["welcome", "demo"],
-      isPinned: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      userId: "1"
-    },
-    {
-      id: "2",
-      title: "Demo Credentials",
-      content: "Login with:\n- Email: demo@example.com\n- Password: demo123\n\nOr:\n- Email: admin@example.com\n- Password: admin123",
-      category: "Information",
-      tags: ["login", "demo"],
-      isPinned: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      userId: "1"
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-  ]
+
+    const note = await prisma.note.findFirst({
+      where: {
+        id: params.id,
+        userId: session.user.id
+      },
+      include: {
+        category: true,
+        noteTags: {
+          include: { tag: true }
+        }
+      }
+    }) as any
+
+    if (!note) {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 })
+    }
+
+    // Transform the data
+    const transformedNote = {
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      category: note.category?.name || '',
+      tags: note.noteTags?.map((nt: any) => nt.tag.name) || [],
+      createdAt: note.createdAt,
+      updatedAt: note.updatedAt,
+      isPinned: note.isPinned
+    }
+
+    return NextResponse.json(transformedNote)
+  } catch (error) {
+    console.error('Error fetching note:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
 }
 
 export async function PUT(
@@ -44,37 +80,12 @@ export async function PUT(
     const session = await auth()
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { title, content, category, tags, isPinned } = await request.json()
 
-    // Get current notes
-    notes = getNotesFromMemory()
-
-    // Find the note and check if it belongs to the user
-    const noteIndex = notes.findIndex(note => note.id === params.id && note.userId === session.user.id)
-
-    if (noteIndex === -1) {
-      return NextResponse.json({ error: "Note not found" }, { status: 404 })
-    }
-
-    // Update the note
-    notes[noteIndex] = {
-      ...notes[noteIndex],
-      title,
-      content,
-      category,
-      tags: tags || [],
-      isPinned: isPinned !== undefined ? isPinned : notes[noteIndex].isPinned,
-      updatedAt: new Date().toISOString()
-    }
-
-    return NextResponse.json(notes[noteIndex])
-
-    // Database version (commented out)
-    /*
-    // Check if note belongs to user
+    // Verify note exists and belongs to user
     const existingNote = await prisma.note.findFirst({
       where: {
         id: params.id,
@@ -83,26 +94,104 @@ export async function PUT(
     })
 
     if (!existingNote) {
-      return NextResponse.json({ error: "Note not found" }, { status: 404 })
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 })
     }
 
-    const note = await prisma.note.update({
+    // Handle category
+    let categoryRecord = null
+    if (category) {
+      categoryRecord = await prisma.category.upsert({
+        where: {
+          name_userId: {
+            name: category,
+            userId: session.user.id
+          }
+        },
+        create: {
+          name: category,
+          userId: session.user.id
+        },
+        update: {}
+      })
+    }
+
+    // Update note
+    const updatedNote = await prisma.note.update({
       where: { id: params.id },
       data: {
-        title,
-        content,
-        category,
-        tags: tags || [],
-        isPinned
+        title: title ?? existingNote.title,
+        content: content ?? existingNote.content,
+        isPinned: isPinned ?? existingNote.isPinned,
+        categoryId: categoryRecord?.id ?? existingNote.categoryId
+      },
+      include: {
+        category: true,
+        noteTags: {
+          include: { tag: true }
+        }
       }
     })
 
-    return NextResponse.json(note)
-    */
+    // Handle tags update
+    if (tags && Array.isArray(tags)) {
+      // Remove existing tag relationships
+      await prisma.noteTag.deleteMany({
+        where: { noteId: params.id }
+      })
+
+      // Add new tag relationships
+      for (const tagName of tags) {
+        const tag = await prisma.tag.upsert({
+          where: {
+            name_userId: {
+              name: tagName,
+              userId: session.user.id
+            }
+          },
+          create: {
+            name: tagName,
+            userId: session.user.id
+          },
+          update: {}
+        })
+
+        await prisma.noteTag.create({
+          data: {
+            noteId: params.id,
+            tagId: tag.id
+          }
+        })
+      }
+    }
+
+    // Fetch the complete updated note
+    const completeNote = await prisma.note.findUnique({
+      where: { id: params.id },
+      include: {
+        category: true,
+        noteTags: {
+          include: { tag: true }
+        }
+      }
+    })
+
+    // Transform the data
+    const transformedNote = {
+      id: (completeNote as NoteWithRelations)!.id,
+      title: (completeNote as NoteWithRelations)!.title,
+      content: (completeNote as NoteWithRelations)!.content,
+      category: (completeNote as NoteWithRelations)!.category?.name || '',
+      tags: (completeNote as NoteWithRelations)!.noteTags.map(nt => nt.tag.name),
+      createdAt: (completeNote as NoteWithRelations)!.createdAt,
+      updatedAt: (completeNote as NoteWithRelations)!.updatedAt,
+      isPinned: (completeNote as NoteWithRelations)!.isPinned
+    }
+
+    return NextResponse.json(transformedNote)
   } catch (error) {
-    console.error("Error updating note:", error)
+    console.error('Error updating note:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
@@ -116,27 +205,10 @@ export async function DELETE(
     const session = await auth()
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get current notes
-    notes = getNotesFromMemory()
-
-    // Find the note and check if it belongs to the user
-    const noteIndex = notes.findIndex(note => note.id === params.id && note.userId === session.user.id)
-
-    if (noteIndex === -1) {
-      return NextResponse.json({ error: "Note not found" }, { status: 404 })
-    }
-
-    // Remove the note
-    notes.splice(noteIndex, 1)
-
-    return NextResponse.json({ message: "Note deleted successfully" })
-
-    // Database version (commented out)
-    /*
-    // Check if note belongs to user
+    // Verify note exists and belongs to user
     const existingNote = await prisma.note.findFirst({
       where: {
         id: params.id,
@@ -145,19 +217,19 @@ export async function DELETE(
     })
 
     if (!existingNote) {
-      return NextResponse.json({ error: "Note not found" }, { status: 404 })
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 })
     }
 
+    // Delete note (this will cascade delete note-tag relationships)
     await prisma.note.delete({
       where: { id: params.id }
     })
 
-    return NextResponse.json({ message: "Note deleted successfully" })
-    */
+    return NextResponse.json({ message: 'Note deleted successfully' })
   } catch (error) {
-    console.error("Error deleting note:", error)
+    console.error('Error deleting note:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

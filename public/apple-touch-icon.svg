@@ -1,0 +1,45 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient circle -->
+  <circle cx="90" cy="90" r="90" fill="url(#gradient)" />
+  
+  <!-- Note/Document icon -->
+  <path d="M50 35C50 31.1341 53.1341 28 57 28H101L130 57V134C130 137.866 126.866 141 123 141H57C53.1341 141 50 137.866 50 134V35Z" fill="white" fill-opacity="0.95"/>
+  
+  <!-- Folded corner -->
+  <path d="M101 28V50C101 53.866 104.134 57 108 57H130L101 28Z" fill="white" fill-opacity="0.7"/>
+  
+  <!-- Text lines -->
+  <rect x="67" y="74" width="46" height="6" rx="3" fill="url(#textGradient)" fill-opacity="0.8"/>
+  <rect x="67" y="90" width="35" height="6" rx="3" fill="url(#textGradient)" fill-opacity="0.6"/>
+  <rect x="67" y="106" width="40" height="6" rx="3" fill="url(#textGradient)" fill-opacity="0.7"/>
+  
+  <!-- Sparkle elements -->
+  <circle cx="30" cy="45" r="6" fill="#fbbf24" opacity="0.8"/>
+  <circle cx="150" cy="68" r="5" fill="#f59e0b" opacity="0.9"/>
+  <circle cx="25" cy="135" r="4" fill="#fbbf24" opacity="0.7"/>
+  <circle cx="155" cy="145" r="4.5" fill="#f59e0b" opacity="0.8"/>
+  
+  <!-- Small sparkle dots -->
+  <circle cx="45" cy="25" r="2.5" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="135" cy="35" r="3" fill="#f59e0b" opacity="0.7"/>
+  <circle cx="15" cy="90" r="2" fill="#fbbf24" opacity="0.5"/>
+  <circle cx="165" cy="110" r="2.5" fill="#f59e0b" opacity="0.6"/>
+  
+  <!-- Additional sparkles for richness -->
+  <circle cx="35" cy="160" r="3" fill="#fbbf24" opacity="0.7"/>
+  <circle cx="145" cy="160" r="2.5" fill="#f59e0b" opacity="0.8"/>
+  <circle cx="170" cy="45" r="2" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="10" cy="60" r="1.5" fill="#f59e0b" opacity="0.5"/>
+  
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#a855f7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

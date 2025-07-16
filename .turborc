@@ -1,0 +1,19 @@
+{
+  "extends": [],
+  "experimental": {
+    "optimizePackageImports": [
+      "lucide-react",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-label",
+      "react-markdown",
+      "date-fns"
+    ]
+  },
+  "modularizeImports": {
+    "lucide-react": {
+      "transform": "lucide-react/dist/esm/icons/{{member}}"
+    }
+  }
+}

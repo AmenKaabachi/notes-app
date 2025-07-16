@@ -21,8 +21,46 @@ A modern, full-featured notes application built with Next.js 14, TypeScript, and
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type-safe JavaScript
 - **Tailwind CSS** - Utility-first CSS framework
+- **Turbopack** - Next.js's fast bundler for lightning-fast development
 - **Lucide React** - Beautiful icons
 - **date-fns** - Date formatting utilities
+
+## 🚀 Turbopack Integration
+
+This project is optimized with **Turbopack**, Next.js's next-generation bundler that provides:
+
+- ⚡ **10x faster cold starts** compared to webpack
+- 🔄 **Near-instant hot module replacement** 
+- 💾 **Improved memory efficiency**
+- 📦 **Better incremental builds**
+
+### Turbopack Commands
+
+```bash
+# Start development with Turbopack (default)
+npm run dev
+
+# Start with explicit Turbopack flag
+npm run dev:turbo
+
+# Fallback to webpack if needed
+npm run dev:webpack
+
+# Build with Turbopack optimizations
+npm run build:turbo
+```
+
+### Quick Start Scripts
+
+For Windows (PowerShell):
+```powershell
+.\start-turbo.ps1
+```
+
+For Unix/Linux/macOS:
+```bash
+./start-turbo.sh
+```
 
 ## Getting Started
 
@@ -39,7 +77,11 @@ npm install
 
 3. **Run the development server**
 ```bash
+# With Turbopack (recommended for faster development)
 npm run dev
+
+# Or with webpack (fallback)
+npm run dev:webpack
 ```
 
 4. **Open your browser**
@@ -47,7 +89,8 @@ Visit [http://localhost:3000](http://localhost:3000)
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
+- `npm run dev` - Start development server with Turbopack
+- `npm run dev:webpack` - Start development server with webpack
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint

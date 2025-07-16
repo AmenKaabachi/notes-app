@@ -1,61 +1,42 @@
-import { NextRequest, NextResponse } from "next/server"
-// import { PrismaClient } from "@prisma/client"
-import { auth } from "@/lib/auth"
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
-// const prisma = new PrismaClient()
-
-// In-memory storage for demo (in production, use a proper database)
-let notes: any[] = [
-  {
-    id: "1",
-    title: "Welcome to Notes App",
-    content: "This is your first note! You can create, edit, and delete notes here.",
-    category: "General",
-    tags: ["welcome", "demo"],
-    isPinned: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    userId: "1"
-  },
-  {
-    id: "2",
-    title: "Demo Credentials",
-    content: "Login with:\n- Email: demo@example.com\n- Password: demo123\n\nOr:\n- Email: admin@example.com\n- Password: admin123",
-    category: "Information",
-    tags: ["login", "demo"],
-    isPinned: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    userId: "1"
-  }
-]
+// Type for note with included relations
+type NoteWithRelations = {
+  id: string;
+  title: string;
+  content: string;
+  categoryId: string | null;
+  isPinned: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  category: { id: string; name: string; userId: string; createdAt: Date } | null;
+  noteTags: Array<{
+    id: string;
+    noteId: string;
+    tagId: string;
+    createdAt: Date;
+    tag: { id: string; name: string; userId: string; createdAt: Date };
+  }>;
+};
 
 export async function GET(request: NextRequest) {
   try {
     const session = await auth()
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Filter notes by user ID
-    const userNotes = notes.filter(note => note.userId === session.user.id)
-    
-    // Sort by pinned first, then by updated date
-    const sortedNotes = userNotes.sort((a, b) => {
-      if (a.isPinned !== b.isPinned) {
-        return a.isPinned ? -1 : 1
-      }
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    })
-
-    return NextResponse.json(sortedNotes)
-
-    // Database version (commented out)
-    /*
     const notes = await prisma.note.findMany({
-      where: {
-        userId: session.user.id
+      where: { userId: session.user.id },
+      include: {
+        category: true,
+        noteTags: {
+          include: { tag: true }
+        }
       },
       orderBy: [
         { isPinned: 'desc' },
@@ -63,12 +44,25 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json(notes)
-    */
+    // Transform the data to match the expected format
+    const transformedNotes = notes.map((note: NoteWithRelations) => ({
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      category: note.category?.name || '',
+      tags: note.noteTags.map(nt => nt.tag.name),
+      createdAt: note.createdAt,
+      updatedAt: note.updatedAt,
+      isPinned: note.isPinned,
+      categoryId: note.categoryId,
+      userId: note.userId
+    }))
+
+    return NextResponse.json(transformedNotes)
   } catch (error) {
-    console.error("Error fetching notes:", error)
+    console.error('Error fetching notes:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
@@ -79,53 +73,111 @@ export async function POST(request: NextRequest) {
     const session = await auth()
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { title, content, category, tags } = await request.json()
+    const { title, content, category, tags, isPinned } = await request.json()
 
     if (!title || !content) {
       return NextResponse.json(
-        { error: "Title and content are required" },
+        { error: 'Title and content are required' },
         { status: 400 }
       )
     }
 
-    // Create new note
-    const newNote = {
-      id: Date.now().toString(),
-      title,
-      content,
-      category,
-      tags: tags || [],
-      isPinned: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      userId: session.user.id
+    // Create or find category
+    let categoryRecord = null
+    if (category) {
+      categoryRecord = await prisma.category.upsert({
+        where: {
+          name_userId: {
+            name: category,
+            userId: session.user.id
+          }
+        },
+        create: {
+          name: category,
+          userId: session.user.id
+        },
+        update: {}
+      })
     }
 
-    notes.unshift(newNote)
-
-    return NextResponse.json(newNote)
-
-    // Database version (commented out)
-    /*
+    // Create note
     const note = await prisma.note.create({
       data: {
         title,
         content,
-        category,
-        tags: tags || [],
-        userId: session.user.id
+        isPinned: isPinned || false,
+        userId: session.user.id,
+        categoryId: categoryRecord?.id
+      },
+      include: {
+        category: true,
+        noteTags: {
+          include: { tag: true }
+        }
       }
     })
 
-    return NextResponse.json(note)
-    */
+    // Handle tags
+    if (tags && Array.isArray(tags)) {
+      for (const tagName of tags) {
+        // Create or find tag
+        const tag = await prisma.tag.upsert({
+          where: {
+            name_userId: {
+              name: tagName,
+              userId: session.user.id
+            }
+          },
+          create: {
+            name: tagName,
+            userId: session.user.id
+          },
+          update: {}
+        })
+
+        // Create note-tag relationship
+        await prisma.noteTag.create({
+          data: {
+            noteId: note.id,
+            tagId: tag.id
+          }
+        })
+      }
+    }
+
+    // Fetch the complete note with relationships
+    const completeNote = await prisma.note.findUnique({
+      where: { id: note.id },
+      include: {
+        category: true,
+        noteTags: {
+          include: { tag: true }
+        }
+      }
+    })
+
+    // Transform the data
+    const transformedNote = {
+      id: (completeNote as NoteWithRelations)!.id,
+      title: (completeNote as NoteWithRelations)!.title,
+      content: (completeNote as NoteWithRelations)!.content,
+      category: (completeNote as NoteWithRelations)!.category?.name || '',
+      tags: (completeNote as NoteWithRelations)!.noteTags.map(nt => nt.tag.name),
+      createdAt: (completeNote as NoteWithRelations)!.createdAt,
+      updatedAt: (completeNote as NoteWithRelations)!.updatedAt,
+      isPinned: (completeNote as NoteWithRelations)!.isPinned,
+      categoryId: (completeNote as NoteWithRelations)!.categoryId,
+      userId: (completeNote as NoteWithRelations)!.userId
+    }
+
+    return NextResponse.json(transformedNote, { status: 201 })
   } catch (error) {
-    console.error("Error creating note:", error)
+    console.error('Error creating note:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
