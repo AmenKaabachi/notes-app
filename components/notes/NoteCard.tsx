@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Note } from '../types/note';
+import { Note } from '@/types/note';
 import { formatDistanceToNow } from 'date-fns';
 import { Pin, Tag } from 'lucide-react';
 import UseAnimations from 'react-useanimations';

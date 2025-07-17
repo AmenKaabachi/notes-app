@@ -73,30 +73,7 @@ export default function Login() {
     }
   }
 
-  const handleDemoLogin = async (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail)
-    setPassword(demoPassword)
-    setIsLoading(true)
-    setError('')
 
-    try {
-      const result = await signIn('credentials', {
-        email: demoEmail,
-        password: demoPassword,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        setError('Demo login failed')
-      } else {
-        router.push('/')
-      }
-    } catch (error) {
-      setError('An error occurred. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 flex items-center justify-center p-4">
@@ -212,78 +189,7 @@ export default function Login() {
                 </Link>
               </p>
             </div>
-
-            <div className="relative flex items-center justify-center py-6">
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent" />
-              <span className="glass-effect px-4 py-2 text-sm text-gray-500 dark:text-gray-400 rounded-full border border-white/20 dark:border-gray-600/20">
-                ✨ Or try our demo
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              <Button
-                type="button"
-                onClick={() => handleDemoLogin('demo@example.com', 'password')}
-                className="w-full glass-effect border border-white/30 dark:border-gray-600/30 bg-white/20 dark:bg-gray-700/20 text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-gray-600/30 transition-all duration-300 rounded-xl py-3"
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="text-2xl">👤</span>
-                  <span>Try Demo Account</span>
-                </div>
-              </Button>
-              
-              <Button
-                type="button"
-                onClick={() => handleDemoLogin('admin@example.com', 'admin123')}
-                className="w-full glass-effect border border-white/30 dark:border-gray-600/30 bg-white/20 dark:bg-gray-700/20 text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-gray-600/30 transition-all duration-300 rounded-xl py-3"
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="text-2xl">👨‍💼</span>
-                  <span>Try Admin Account</span>
-                </div>
-              </Button>
-            </div>
           </form>
-        </div>
-
-        {/* Demo Credentials Info */}
-        <div className="glass-effect rounded-2xl p-6 border border-white/20 dark:border-gray-700/50 backdrop-blur-sm animate-fade-in">
-          <h3 className="text-sm font-medium text-purple-800 dark:text-purple-200 mb-3 flex items-center">
-            <span className="text-lg mr-2">🎯</span>
-            Quick Demo Access:
-          </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-white/30 dark:bg-gray-700/30 rounded-xl">
-              <div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Demo User</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">demo@example.com / demo123</div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin('demo@example.com', 'demo123')}
-                disabled={isLoading}
-                className="glass-effect border-purple-300 dark:border-purple-600 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300 rounded-lg"
-              >
-                Try It
-              </Button>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-white/30 dark:bg-gray-700/30 rounded-xl">
-              <div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin User</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">admin@example.com / admin123</div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin('admin@example.com', 'admin123')}
-                disabled={isLoading}
-                className="glass-effect border-pink-300 dark:border-pink-600 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-all duration-300 rounded-lg"
-              >
-                Try It
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

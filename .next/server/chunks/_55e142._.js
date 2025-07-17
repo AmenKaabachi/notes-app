@@ -180,6 +180,9 @@ async function GET(request) {
                     isPinned: 'desc'
                 },
                 {
+                    order: 'asc'
+                },
+                {
                     updatedAt: 'desc'
                 }
             ]
@@ -194,6 +197,7 @@ async function GET(request) {
                 createdAt: note.createdAt,
                 updatedAt: note.updatedAt,
                 isPinned: note.isPinned,
+                order: note.order,
                 categoryId: note.categoryId,
                 userId: note.userId
             }));
@@ -225,6 +229,16 @@ async function POST(request) {
                 status: 400
             });
         }
+        // Get the maximum order value for this user's notes
+        const maxOrderNote = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].note.findFirst({
+            where: {
+                userId: session.user.id
+            },
+            orderBy: {
+                order: 'desc'
+            }
+        });
+        const nextOrder = (maxOrderNote?.order ?? -1) + 1;
         // Create or find category
         let categoryRecord = null;
         if (category) {
@@ -248,6 +262,7 @@ async function POST(request) {
                 title,
                 content,
                 isPinned: isPinned || false,
+                order: nextOrder,
                 userId: session.user.id,
                 categoryId: categoryRecord?.id
             },
@@ -310,6 +325,7 @@ async function POST(request) {
             createdAt: completeNote.createdAt,
             updatedAt: completeNote.updatedAt,
             isPinned: completeNote.isPinned,
+            order: completeNote.order,
             categoryId: completeNote.categoryId,
             userId: completeNote.userId
         };

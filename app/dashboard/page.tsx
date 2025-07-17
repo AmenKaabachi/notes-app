@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { NoteCard } from '@/components/notes/NoteCard';
@@ -9,6 +9,7 @@ import { NoteViewer } from '@/components/notes/NoteViewer';
 import { SearchBar } from '@/components/notes/SearchBar';
 import { EmptyState } from '@/components/notes/EmptyState';
 import { UserDropdown } from '@/components/layout/user-dropdown';
+import { DragDropProvider } from '@/components/notes/DragDropProvider';
 import { Note } from '@/types/note';
 import { Moon, Sun, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -57,7 +58,7 @@ export default function Home() {
     }
   };
 
-  const addNote = async (noteData: any) => {
+  const addNote = useCallback(async (noteData: any) => {
     try {
       const response = await fetch('/api/notes', {
         method: 'POST',
@@ -69,15 +70,15 @@ export default function Home() {
       
       if (response.ok) {
         const newNote = await response.json();
-        setNotes([newNote, ...notes]);
+        setNotes(prevNotes => [newNote, ...prevNotes]);
         setIsEditorOpen(false);
       }
     } catch (error) {
       console.error('Error adding note:', error);
     }
-  };
+  }, []);
 
-  const updateNote = async (id: string, noteData: any) => {
+  const updateNote = useCallback(async (id: string, noteData: any) => {
     try {
       const response = await fetch(`/api/notes/${id}`, {
         method: 'PUT',
@@ -89,27 +90,27 @@ export default function Home() {
       
       if (response.ok) {
         const updatedNote = await response.json();
-        setNotes(notes.map(note => note.id === id ? updatedNote : note));
+        setNotes(prevNotes => prevNotes.map(note => note.id === id ? updatedNote : note));
         setIsEditorOpen(false);
       }
     } catch (error) {
       console.error('Error updating note:', error);
     }
-  };
+  }, []);
 
-  const deleteNote = async (id: string) => {
+  const deleteNote = useCallback(async (id: string) => {
     try {
       const response = await fetch(`/api/notes/${id}`, {
         method: 'DELETE',
       });
       
       if (response.ok) {
-        setNotes(notes.filter(note => note.id !== id));
+        setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
       }
     } catch (error) {
       console.error('Error deleting note:', error);
     }
-  };
+  }, []);
 
   const togglePin = async (id: string) => {
     const note = notes.find(n => n.id === id);
@@ -142,32 +143,78 @@ export default function Home() {
       if (a.isPinned !== b.isPinned) {
         return a.isPinned ? -1 : 1;
       }
+      // If both pinned or both unpinned, sort by order first, then by update time
+      if (a.order !== b.order) {
+        return a.order - b.order;
+      }
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
   };
 
-  const handleSaveNote = (noteData: any) => {
+  const reorderNotes = async (startIndex: number, endIndex: number) => {
+    const filteredList = filteredNotes();
+    const reorderedNotes = Array.from(filteredList);
+    const [movedNote] = reorderedNotes.splice(startIndex, 1);
+    reorderedNotes.splice(endIndex, 0, movedNote);
+
+    // Store original state for potential revert
+    const originalNotes = notes;
+
+    // Update local state immediately for better UX
+    const updatedNotes = notes.map(note => {
+      const newIndex = reorderedNotes.findIndex(rn => rn.id === note.id);
+      if (newIndex !== -1) {
+        return { ...note, order: newIndex };
+      }
+      return note;
+    });
+    setNotes(updatedNotes);
+
+    // Send update to server
+    try {
+      const noteIds = reorderedNotes.map(note => note.id);
+      const response = await fetch('/api/notes/reorder', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ noteIds }),
+      });
+
+      if (!response.ok) {
+        // Revert on error
+        setNotes(originalNotes);
+        console.error('Failed to reorder notes');
+      }
+    } catch (error) {
+      // Revert on error
+      setNotes(originalNotes);
+      console.error('Error reordering notes:', error);
+    }
+  };
+
+  const handleSaveNote = useCallback((noteData: any) => {
     if (editingNote) {
       updateNote(editingNote.id, noteData);
     } else {
       addNote(noteData);
     }
-  };
+  }, [editingNote, addNote, updateNote]);
 
-  const handleEditNote = (note: Note) => {
+  const handleEditNote = useCallback((note: Note) => {
     setEditingNote(note);
     setIsEditorOpen(true);
-  };
+  }, []);
 
-  const handleCreateNote = () => {
+  const handleCreateNote = useCallback(() => {
     setEditingNote(undefined);
     setIsEditorOpen(true);
-  };
+  }, []);
 
-  const handleCloseEditor = () => {
+  const handleCloseEditor = useCallback(() => {
     setIsEditorOpen(false);
     setEditingNote(undefined);
-  };
+  }, []);
 
   const handleViewNote = (note: Note) => {
     setViewingNote(note);
@@ -358,27 +405,15 @@ export default function Home() {
             <EmptyState onCreateNote={handleCreateNote} isSearching={!!searchQuery} />
           </div>
         ) : (
-          <div className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-              : 'space-y-4'
-          }>
-            {filteredNotes().map((note, index) => (
-              <div
-                key={note.id}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <NoteCard
-                  note={note}
-                  onEdit={handleEditNote}
-                  onDelete={deleteNote}
-                  onTogglePin={togglePin}
-                  onView={handleViewNote}
-                />
-              </div>
-            ))}
-          </div>
+          <DragDropProvider
+            notes={filteredNotes()}
+            onReorderNotes={reorderNotes}
+            onEdit={handleEditNote}
+            onDelete={deleteNote}
+            onTogglePin={togglePin}
+            onView={handleViewNote}
+            viewMode={viewMode}
+          />
         )}
       </main>
 

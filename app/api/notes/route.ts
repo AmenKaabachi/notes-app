@@ -9,6 +9,7 @@ type NoteWithRelations = {
   content: string;
   categoryId: string | null;
   isPinned: boolean;
+  order: number;
   createdAt: Date;
   updatedAt: Date;
   userId: string;
@@ -40,6 +41,7 @@ export async function GET(request: NextRequest) {
       },
       orderBy: [
         { isPinned: 'desc' },
+        { order: 'asc' },
         { updatedAt: 'desc' }
       ]
     })
@@ -54,6 +56,7 @@ export async function GET(request: NextRequest) {
       createdAt: note.createdAt,
       updatedAt: note.updatedAt,
       isPinned: note.isPinned,
+      order: note.order,
       categoryId: note.categoryId,
       userId: note.userId
     }))
@@ -85,6 +88,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get the maximum order value for this user's notes
+    const maxOrderNote = await prisma.note.findFirst({
+      where: { userId: session.user.id },
+      orderBy: { order: 'desc' }
+    })
+    const nextOrder = (maxOrderNote?.order ?? -1) + 1
+
     // Create or find category
     let categoryRecord = null
     if (category) {
@@ -109,6 +119,7 @@ export async function POST(request: NextRequest) {
         title,
         content,
         isPinned: isPinned || false,
+        order: nextOrder,
         userId: session.user.id,
         categoryId: categoryRecord?.id
       },
@@ -169,6 +180,7 @@ export async function POST(request: NextRequest) {
       createdAt: (completeNote as NoteWithRelations)!.createdAt,
       updatedAt: (completeNote as NoteWithRelations)!.updatedAt,
       isPinned: (completeNote as NoteWithRelations)!.isPinned,
+      order: (completeNote as NoteWithRelations)!.order,
       categoryId: (completeNote as NoteWithRelations)!.categoryId,
       userId: (completeNote as NoteWithRelations)!.userId
     }

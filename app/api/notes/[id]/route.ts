@@ -9,6 +9,7 @@ type NoteWithRelations = {
   content: string;
   categoryId: string | null;
   isPinned: boolean;
+  order: number;
   createdAt: Date;
   updatedAt: Date;
   userId: string;
@@ -59,7 +60,8 @@ export async function GET(
       tags: note.noteTags?.map((nt: any) => nt.tag.name) || [],
       createdAt: note.createdAt,
       updatedAt: note.updatedAt,
-      isPinned: note.isPinned
+      isPinned: note.isPinned,
+      order: note.order
     }
 
     return NextResponse.json(transformedNote)
@@ -184,7 +186,8 @@ export async function PUT(
       tags: (completeNote as NoteWithRelations)!.noteTags.map(nt => nt.tag.name),
       createdAt: (completeNote as NoteWithRelations)!.createdAt,
       updatedAt: (completeNote as NoteWithRelations)!.updatedAt,
-      isPinned: (completeNote as NoteWithRelations)!.isPinned
+      isPinned: (completeNote as NoteWithRelations)!.isPinned,
+      order: (completeNote as NoteWithRelations)!.order
     }
 
     return NextResponse.json(transformedNote)

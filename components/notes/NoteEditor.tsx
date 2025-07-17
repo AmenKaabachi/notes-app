@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Note, NoteFormData } from '../types/note';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Note, NoteFormData } from '@/types/note';
 import { X, Save, Tag, Folder } from 'lucide-react';
 import UseAnimations from 'react-useanimations';
 import checkmark from 'react-useanimations/lib/checkmark';
@@ -34,6 +34,10 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
     category?: string;
   }>({});
 
+  // Memoize categories and tags to prevent unnecessary re-renders
+  const memoizedCategories = useMemo(() => categories, [categories]);
+  const memoizedTags = useMemo(() => tags, [tags]);
+
   useEffect(() => {
     if (note) {
       setFormData({
@@ -45,7 +49,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
     }
   }, [note]);
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors: typeof errors = {};
 
     if (!formData.title.trim()) {
@@ -62,9 +66,9 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -73,9 +77,9 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
 
     onSave(formData);
     onClose();
-  };
+  }, [formData, validateForm, onSave, onClose]);
 
-  const addTag = () => {
+  const addTag = useCallback(() => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
       setFormData(prev => ({
         ...prev,
@@ -83,18 +87,69 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
       }));
       setNewTag('');
     }
-  };
+  }, [newTag, formData.tags]);
 
-  const removeTag = (tagToRemove: string) => {
+  const removeTag = useCallback((tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove),
     }));
-  };
+  }, []);
+
+  // Optimized input handlers to reduce re-renders
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, title: value }));
+    if (errors.title) setErrors(prev => ({ ...prev, title: undefined }));
+  }, [errors.title]);
+
+  const handleContentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, content: value }));
+    if (errors.content) setErrors(prev => ({ ...prev, content: undefined }));
+  }, [errors.content]);
+
+  const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, category: value }));
+    if (errors.category) setErrors(prev => ({ ...prev, category: undefined }));
+  }, [errors.category]);
+
+  const handleTagInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    }
+  }, [addTag]);
+
+  // Memoize tag rendering to prevent unnecessary re-renders
+  const TagList = useMemo(() => {
+    if (formData.tags.length === 0) return null;
+    
+    return (
+      <div className="flex flex-wrap gap-2 mt-3">
+        {formData.tags.map(tag => (
+          <span
+            key={tag}
+            className="inline-flex items-center space-x-1 px-3 py-1 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900 dark:to-purple-900 text-pink-700 dark:text-pink-200 text-sm rounded-full animate-bounce-in border border-pink-200 dark:border-transparent shadow-sm"
+          >
+            <span>{tag}</span>
+            <button
+              type="button"
+              onClick={() => removeTag(tag)}
+              className="hover:text-red-500 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </span>
+        ))}
+      </div>
+    );
+  }, [formData.tags, removeTag]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-      <div className="glass-effect rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4 animate-slide-up border border-white/20 dark:border-gray-700/50 shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+      <div className="glass-effect-light rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4 animate-slide-up border border-white/20 dark:border-gray-700/50 shadow-2xl">
         <div className="relative bg-white/95 dark:bg-gradient-to-r dark:from-purple-500/10 dark:to-pink-500/10 border-b border-gray-200 dark:border-gray-700/50 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -118,10 +173,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
               type="text"
               placeholder="✍️ What's on your mind?"
               value={formData.title}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, title: e.target.value }))
-                if (errors.title) setErrors(prev => ({ ...prev, title: undefined }))
-              }}
+              onChange={handleTitleChange}
               className={`w-full text-3xl font-bold bg-transparent border-none outline-none placeholder-gray-400 dark:placeholder-gray-400 text-gray-800 dark:text-white transition-all duration-300 ${
                 errors.title ? 'text-red-500' : 'focus:text-purple-600 dark:focus:text-purple-400'
               }`}
@@ -142,10 +194,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                 type="text"
                 placeholder="📁 Choose a category..."
                 value={formData.category}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, category: e.target.value }))
-                  if (errors.category) setErrors(prev => ({ ...prev, category: undefined }))
-                }}
+                onChange={handleCategoryChange}
                 list="categories"
                 className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 text-gray-800 dark:text-white bg-white dark:bg-gray-800/30 transition-all duration-300 shadow-sm ${
                   errors.category ? 'border-red-500 focus:ring-red-500/50' : ''
@@ -155,7 +204,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                 <p className="text-red-500 text-sm mt-2 animate-bounce-in">{errors.category}</p>
               )}
               <datalist id="categories">
-                {categories.map(category => (
+                {memoizedCategories.map(category => (
                   <option key={category} value={category} />
                 ))}
               </datalist>
@@ -172,12 +221,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                   placeholder="🏷️ Add tags..."
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addTag();
-                    }
-                  }}
+                  onKeyDown={handleTagInputKeyDown}
                   list="tags"
                   className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 text-gray-800 dark:text-white bg-white dark:bg-gray-800/30 transition-all duration-300 shadow-sm"
                 />
@@ -190,32 +234,14 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                 </button>
               </div>
               <datalist id="tags">
-                {tags.map(tag => (
+                {memoizedTags.map(tag => (
                   <option key={tag} value={tag} />
                 ))}
               </datalist>
             </div>
           </div>
 
-          {formData.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {formData.tags.map(tag => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center space-x-1 px-3 py-1 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900 dark:to-purple-900 text-pink-700 dark:text-pink-200 text-sm rounded-full animate-bounce-in border border-pink-200 dark:border-transparent shadow-sm"
-                >
-                  <span>{tag}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeTag(tag)}
-                    className="hover:text-red-500 transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+          {TagList}
 
           <div>
             <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -225,10 +251,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
             <textarea
               placeholder="✨ Share your thoughts, ideas, or memories..."
               value={formData.content}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, content: e.target.value }))
-                if (errors.content) setErrors(prev => ({ ...prev, content: undefined }))
-              }}
+              onChange={handleContentChange}
               className={`w-full h-64 px-4 py-4 border border-gray-300 dark:border-gray-600/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-gray-800 dark:text-white bg-white dark:bg-gray-800/30 resize-none transition-all duration-300 shadow-sm ${
                 errors.content ? 'border-red-500 focus:ring-red-500/50' : ''
               }`}
