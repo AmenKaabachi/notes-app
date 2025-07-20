@@ -1,8 +1,11 @@
 {
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/auth/sessions/track/route": "app/api/auth/sessions/track/route.js",
   "/api/notes/route": "app/api/notes/route.js",
-  "/login/page": "app/login/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/notes/reorder/route": "app/api/notes/reorder/route.js"
+  "/api/auth/validate/route": "app/api/auth/validate/route.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/api/auth/sessions/route": "app/api/auth/sessions/route.js"
 }

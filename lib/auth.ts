@@ -2,7 +2,7 @@ import NextAuth, { type NextAuthConfig } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 
-// Base configuration that works in Edge Runtime (middleware)
+// Base configuration that works with JWT sessions and Edge Runtime
 const baseConfig: NextAuthConfig = {
   providers: [
     CredentialsProvider({
@@ -54,10 +54,16 @@ const baseConfig: NextAuthConfig = {
     })
   ],
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
-    signIn: '/login'
+    signIn: '/login',
+    signOut: '/login'
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -77,6 +83,12 @@ const baseConfig: NextAuthConfig = {
           id: token.id as string
         }
       }
+    }
+  },
+  events: {
+    async signOut() {
+      // You can add additional cleanup logic here if needed
+      console.log('User signed out')
     }
   }
 }

@@ -18,7 +18,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$bcryptjs$2f$
 ;
 ;
 ;
-// Base configuration that works in Edge Runtime (middleware)
+// Base configuration that works with JWT sessions and Edge Runtime
 const baseConfig = {
     providers: [
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$auth$2f$core$2f$providers$2f$credentials$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"])({
@@ -66,10 +66,16 @@ const baseConfig = {
         })
     ],
     session: {
-        strategy: 'jwt'
+        strategy: 'jwt',
+        maxAge: 30 * 24 * 60 * 60,
+        updateAge: 24 * 60 * 60
+    },
+    jwt: {
+        maxAge: 30 * 24 * 60 * 60
     },
     pages: {
-        signIn: '/login'
+        signIn: '/login',
+        signOut: '/login'
     },
     callbacks: {
         async jwt ({ token, user }) {
@@ -89,6 +95,12 @@ const baseConfig = {
                     id: token.id
                 }
             };
+        }
+    },
+    events: {
+        async signOut () {
+            // You can add additional cleanup logic here if needed
+            console.log('User signed out');
         }
     }
 };

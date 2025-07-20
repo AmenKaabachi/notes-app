@@ -62,7 +62,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$bcryptjs$2f$
 ;
 ;
 ;
-// Base configuration that works in Edge Runtime (middleware)
+// Base configuration that works with JWT sessions and Edge Runtime
 const baseConfig = {
     providers: [
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$auth$2f$core$2f$providers$2f$credentials$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["default"])({
@@ -110,10 +110,16 @@ const baseConfig = {
         })
     ],
     session: {
-        strategy: 'jwt'
+        strategy: 'jwt',
+        maxAge: 30 * 24 * 60 * 60,
+        updateAge: 24 * 60 * 60
+    },
+    jwt: {
+        maxAge: 30 * 24 * 60 * 60
     },
     pages: {
-        signIn: '/login'
+        signIn: '/login',
+        signOut: '/login'
     },
     callbacks: {
         async jwt ({ token, user }) {
@@ -133,6 +139,12 @@ const baseConfig = {
                     id: token.id
                 }
             };
+        }
+    },
+    events: {
+        async signOut () {
+            // You can add additional cleanup logic here if needed
+            console.log('User signed out');
         }
     }
 };
@@ -157,20 +169,29 @@ const __TURBOPACK__default__export__ = (0, __TURBOPACK__imported__module__$5b$pr
     // Public routes that don't require authentication
     const publicRoutes = [
         '/login',
-        '/register'
+        '/register',
+        '/'
     ];
     const isPublicRoute = publicRoutes.includes(pathname);
     // If user is authenticated and trying to access login/register, redirect to dashboard
-    if (req.auth && isPublicRoute) {
+    if (req.auth && (pathname === '/login' || pathname === '/register')) {
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/dashboard', req.url));
     }
     // If user is not authenticated and trying to access protected route, redirect to login
-    if (!req.auth && !isPublicRoute) {
+    if (!req.auth && !isPublicRoute && !pathname.startsWith('/api/auth')) {
         const loginUrl = new URL('/login', req.url);
         loginUrl.searchParams.set('callbackUrl', req.url);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].redirect(loginUrl);
     }
-    return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].next();
+    // Add security headers for better session protection
+    const response = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].next();
+    if (req.auth) {
+        // Add headers to prevent caching of authenticated pages
+        response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        response.headers.set('Pragma', 'no-cache');
+        response.headers.set('Expires', '0');
+    }
+    return response;
 });
 const config = {
     // Protect all routes except public ones

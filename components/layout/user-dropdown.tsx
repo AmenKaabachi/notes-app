@@ -1,16 +1,27 @@
 'use client'
 
 import { useState } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Avatar from '@radix-ui/react-avatar'
 import { User, LogOut, Settings } from 'lucide-react'
 import UseAnimations from 'react-useanimations'
 import settings2 from 'react-useanimations/lib/settings2'
+import { logout } from '@/lib/logout'
 
 export function UserDropdown() {
   const { data: session } = useSession()
   const [isOpen, setIsOpen] = useState(false)
+
+  // Enhanced logout function using the utility
+  const handleLogout = async () => {
+    setIsOpen(false)
+    await logout({
+      redirect: true,
+      callbackUrl: '/login',
+      clearStorage: true
+    })
+  }
 
   if (!session?.user) return null
 
@@ -48,7 +59,10 @@ export function UserDropdown() {
             <span>Profile</span>
           </DropdownMenu.Item>
           
-          <DropdownMenu.Item className="flex items-center space-x-3 px-3 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-white/20 dark:hover:bg-gray-700/50 rounded-xl cursor-pointer transition-all duration-200 group">
+          <DropdownMenu.Item 
+            className="flex items-center space-x-3 px-3 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-white/20 dark:hover:bg-gray-700/50 rounded-xl cursor-pointer transition-all duration-200 group"
+            onClick={() => window.location.href = '/settings'}
+          >
             <UseAnimations 
               animation={settings2} 
               size={16} 
@@ -61,7 +75,7 @@ export function UserDropdown() {
           
           <DropdownMenu.Item
             className="flex items-center space-x-3 px-3 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl cursor-pointer transition-all duration-200 group"
-            onClick={() => signOut()}
+            onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
             <span>Sign out</span>

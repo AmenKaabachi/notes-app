@@ -55,11 +55,18 @@ model Session {
   expires      DateTime
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Enhanced tracking fields
+  userAgent    String?  @map("user_agent")
+  ipAddress    String?  @map("ip_address")
+  lastActivity DateTime @default(now()) @map("last_activity")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([sessionToken])
   @@index([expires])
+  @@index([lastActivity])
   @@map("sessions")
 }
 

@@ -13,12 +13,31 @@ var __TURBOPACK__commonjs__external__$40$prisma$2f$extension$2d$accelerate__ = _
 ;
 const globalForPrisma = globalThis;
 function createPrismaClient() {
+    // Determine log levels based on environment variables
+    let devLogs = [
+        'error'
+    ]; // Default fallback
+    if ("TURBOPACK compile-time truthy", 1) {
+        if (process.env.PRISMA_LOG_LEVEL === 'verbose') {
+            devLogs = [
+                'query',
+                'warn',
+                'error'
+            ];
+            console.log('🔍 Prisma logging: VERBOSE mode (queries + warnings + errors)');
+        } else {
+            // 'basic' or any other value = no queries, just warnings and errors
+            devLogs = [
+                'warn',
+                'error'
+            ];
+            console.log('🎯 Prisma logging: BASIC mode (warnings + errors only)');
+        }
+    } else {
+        "TURBOPACK unreachable";
+    }
     return new __TURBOPACK__commonjs__external__$40$prisma$2f$client__["PrismaClient"]({
-        log: ("TURBOPACK compile-time truthy", 1) ? [
-            'query',
-            'error',
-            'warn'
-        ] : ("TURBOPACK unreachable", undefined)
+        log: devLogs
     }).$extends((0, __TURBOPACK__commonjs__external__$40$prisma$2f$extension$2d$accelerate__["withAccelerate"])());
 }
 const prisma = globalForPrisma.prisma ?? createPrismaClient();

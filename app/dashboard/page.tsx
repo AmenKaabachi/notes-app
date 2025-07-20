@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 import { NoteCard } from '@/components/notes/NoteCard';
 import { NoteEditor } from '@/components/notes/NoteEditor';
 import { NoteViewer } from '@/components/notes/NoteViewer';
@@ -18,7 +19,8 @@ import plusToX from 'react-useanimations/lib/plusToX';
 import loadingAnimation from 'react-useanimations/lib/loading2';
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const { session, status, isAuthenticated, isLoading } = useAuth();
+  const { isTracking } = useSessionTracking(); // Add session tracking
   const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,13 +31,6 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
 
   // Fetch notes when user is authenticated
   useEffect(() => {
@@ -257,7 +252,7 @@ export default function Home() {
   };
 
   // Show loading spinner while checking authentication
-  if (status === 'loading') {
+  if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 flex items-center justify-center">
         <div className="text-center">
@@ -273,7 +268,7 @@ export default function Home() {
   }
 
   // Don't render anything if not authenticated (will redirect to login)
-  if (status === 'unauthenticated') {
+  if (status === 'unauthenticated' || !isAuthenticated) {
     return null;
   }
 

@@ -1,10 +1,32 @@
 {
   "pages": {
+    "/dashboard/page": [
+      "static/chunks/[root of the server]__ef8e25._.css",
+      "static/chunks/node_modules_52bf6a._.js",
+      "static/chunks/_5f8192._.js",
+      "static/chunks/app_layout_tsx_1e228b._.js",
+      "static/chunks/_d75e01._.js",
+      "static/chunks/node_modules_lottie-web_build_player_lottie_78554e.js",
+      "static/chunks/node_modules_@hello-pangea_dnd_dist_dnd_esm_f3930d.js",
+      "static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_b854ac._.js",
+      "static/chunks/node_modules_6f0585._.js",
+      "static/chunks/app_dashboard_page_tsx_8e7972._.js",
+      "static/chunks/node_modules_next_dist_compiled_react_a1d82d._.js",
+      "static/chunks/node_modules_next_dist_compiled_react-dom_cjs_react-dom_development_c9a189.js",
+      "static/chunks/node_modules_next_dist_compiled_react-dom_87a050._.js",
+      "static/chunks/node_modules_next_dist_compiled_e13b54._.js",
+      "static/chunks/node_modules_next_dist_client_8bb71d._.js",
+      "static/chunks/node_modules_next_dist_38ecb8._.js",
+      "static/chunks/node_modules_@swc_helpers_cjs_00636a._.js",
+      "static/chunks/[turbopack]_dev_client_hmr-client_ts_23f2be._.js",
+      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_96f4a3.js",
+      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_be6bc5.js"
+    ],
     "/login/page": [
       "static/chunks/[root of the server]__ef8e25._.css",
       "static/chunks/node_modules_52bf6a._.js",
-      "static/chunks/_ec63e7._.js",
-      "static/chunks/app_layout_tsx_789cb0._.js",
+      "static/chunks/_5f8192._.js",
+      "static/chunks/app_layout_tsx_1e228b._.js",
       "static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_b854ac._.js",
       "static/chunks/node_modules_lottie-web_build_player_lottie_78554e.js",
       "static/chunks/node_modules_8a3d7f._.js",
@@ -21,17 +43,11 @@
       "static/chunks/node_modules_next_dist_esm_build_templates_app-page_c8b707.js",
       "static/chunks/node_modules_next_dist_esm_build_templates_app-page_03effa.js"
     ],
-    "/dashboard/page": [
+    "/page": [
       "static/chunks/[root of the server]__ef8e25._.css",
       "static/chunks/node_modules_52bf6a._.js",
-      "static/chunks/_ec63e7._.js",
-      "static/chunks/app_layout_tsx_789cb0._.js",
-      "static/chunks/_7de86d._.js",
-      "static/chunks/node_modules_lottie-web_build_player_lottie_78554e.js",
-      "static/chunks/node_modules_@hello-pangea_dnd_dist_dnd_esm_f3930d.js",
-      "static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_b854ac._.js",
-      "static/chunks/node_modules_6f0585._.js",
-      "static/chunks/app_dashboard_page_tsx_7eddca._.js",
+      "static/chunks/_5f8192._.js",
+      "static/chunks/app_layout_tsx_1e228b._.js",
       "static/chunks/node_modules_next_dist_compiled_react_a1d82d._.js",
       "static/chunks/node_modules_next_dist_compiled_react-dom_cjs_react-dom_development_c9a189.js",
       "static/chunks/node_modules_next_dist_compiled_react-dom_87a050._.js",
@@ -40,14 +56,19 @@
       "static/chunks/node_modules_next_dist_38ecb8._.js",
       "static/chunks/node_modules_@swc_helpers_cjs_00636a._.js",
       "static/chunks/[turbopack]_dev_client_hmr-client_ts_23f2be._.js",
-      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_96f4a3.js",
-      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_be6bc5.js"
+      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_d76987.js",
+      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_6d50c8.js"
     ],
-    "/_not-found/page": [
+    "/settings/page": [
       "static/chunks/[root of the server]__ef8e25._.css",
       "static/chunks/node_modules_52bf6a._.js",
-      "static/chunks/_ec63e7._.js",
-      "static/chunks/app_layout_tsx_789cb0._.js",
+      "static/chunks/_5f8192._.js",
+      "static/chunks/app_layout_tsx_1e228b._.js",
+      "static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_b854ac._.js",
+      "static/chunks/node_modules_lottie-web_build_player_lottie_78554e.js",
+      "static/chunks/node_modules_ee7dec._.js",
+      "static/chunks/_3023f6._.js",
+      "static/chunks/app_settings_page_tsx_d4fb4c._.js",
       "static/chunks/node_modules_next_dist_compiled_react_a1d82d._.js",
       "static/chunks/node_modules_next_dist_compiled_react-dom_cjs_react-dom_development_c9a189.js",
       "static/chunks/node_modules_next_dist_compiled_react-dom_87a050._.js",
@@ -56,8 +77,8 @@
       "static/chunks/node_modules_next_dist_38ecb8._.js",
       "static/chunks/node_modules_@swc_helpers_cjs_00636a._.js",
       "static/chunks/[turbopack]_dev_client_hmr-client_ts_23f2be._.js",
-      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_b202a4.js",
-      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_09283d.js"
+      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_f90c43.js",
+      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_fa691a.js"
     ]
   }
 }
